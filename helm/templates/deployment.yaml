@@ -21,6 +21,8 @@ spec:
           image: {{ .image }}
           resources:
             {{- toYaml .resources | nindent 12 }}
+          env:
+            {{- toYaml .env | nindent 12 }}
           ports:
     {{- range .ports }}
           - containerPort: {{ .targetPort }}

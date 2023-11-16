@@ -6,29 +6,36 @@ components:
     image: nginx
     replicaCount: 1 
     resources: {requests: {cpu: "30m", memory: "50Mi"}, limits: {cpu: "100m", memory: "128Mi"}}
+    env:
     ports:
-      - port: '80'
-        targetPort: '80'
+      - port: 80
+        targetPort: 80
         proto: TCP
-      - port: '443'
-        targetPort: '443'
+        allowFrom: ingress
+      - port: 443
+        targetPort: 443
         proto: TCP
+        allowFrom: ingress
   - component: app
     image: php:8.2-fpm
     replicaCount: 1 
     resources: {requests: {cpu: "30m", memory: "50Mi"}, limits: {cpu: "100m", memory: "128Mi"}}
+    env:
     ports:
-      - port: '9000'
+      - port: 9000
         proto: TCP
-        targetPort: '9000'
+        targetPort: 9000
+        allowFrom: web
   - component: db
     image: postgres
     replicaCount: 1 
     resources: {requests: {cpu: "30m", memory: "150Mi"}, limits: {cpu: "100m", memory: "256Mi"}}
+    env: [{name: POSTGRES_HOST_AUTH_METHOD, value: trust}]
     ports:
-      - port: '5432'
-        targetPort: '5432'
+      - port: 5432
+        targetPort: 5432
         proto: TCP
+        allowFrom: app
 
 ingress:
   enabled: true

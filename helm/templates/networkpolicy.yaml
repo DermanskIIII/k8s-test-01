@@ -1,0 +1,62 @@
+{{- $fullName := include "test-01.fullname" . -}}
+{{- range $component := .Values.components }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-{{ $component.component }}
+  namespace: ns-{{ $component.component }}-{{ $fullName }}
+spec:
+  podSelector: 
+    matchLabels:
+      app: {{ $component.component }}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  {{- range $port := $component.ports }}
+  {{- if ne .allowFrom nil }}
+  {{- if eq .allowFrom "ingress" }}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: default
+    ports:
+    - protocol: {{ $port.proto }}
+      port: {{ $port.port }}
+  {{- else }}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          app: {{ $port.allowFrom }}
+    - podSelector:
+        matchLabels:
+          app: {{ $port.allowFrom }}
+    ports:
+    - protocol: {{ $port.proto }}
+      port: {{ $port.port }}
+  {{- end}}
+  {{- end }}
+  {{- end }}
+  egress:
+  {{- range $component_from := $.Values.components }}
+  {{- range $port_from := $component_from.ports }}
+  {{- if eq $port_from.allowFrom $component.component }}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          app: {{ $component_from.component }}
+    - podSelector:
+        matchLabels:
+          app: {{ $component_from.component }}
+    ports:
+      - protocol: {{ $port_from.proto }}
+        port: {{ $port_from.port }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  - to:
+    ports:
+    - protocol: UDP
+      port: 53
+{{- end }}
