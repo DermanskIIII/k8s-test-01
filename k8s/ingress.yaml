@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: ns-web
+  name: ing-web
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: test.local
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: svc-web
+            port:
+              number: 80
+                #status:
+                #  loadBalancer:
+                #    ingress:
+                #      - ip: 192.168.122.11

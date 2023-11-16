@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns-web
+  labels:
+    app: web
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ns-web
+  name: dl-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      hostname: webhost
+      containers:
+      - name: cnt-web
+        image: nginx
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "30m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 80
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: ns-web
+  name: svc-web
+spec:
+  selector:
+    app: web
+  ports:
+  - port: 80
+    targetPort: 80

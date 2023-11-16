@@ -1,0 +1,96 @@
+---
+- name: setup hosts file
+  tags: prepare_host
+  template: 
+    src: hosts.j2
+    dest: /etc/hosts
+
+- name: add Docker and K8s gpg-keys
+  tags: prepare_host
+  ansible.builtin.apt_key:
+    url: "{{ item }}"
+    state: present
+  loop: 
+    - "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+    - "https://download.docker.com/linux/ubuntu/gpg"
+
+- name: add Docker and K8s repos
+  tags: prepare_host
+  apt_repository:
+    repo: "{{ item.repo }}"
+    filename: "{{ item.filename }}"
+    state: present
+    update_cache: "{{ item.update_cache }}"
+  loop:
+    - { repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main", filename: kubernetes, update_cache: false }
+    - { repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable", filename: docker, update_cache: true }
+
+- name: install common k8s packages
+  tags: prepare_host
+  ansible.builtin.apt:
+    update_cache: true
+    name: [ containerd.io, kubelet, kubeadm, kubectl, kubernetes-cni ]
+    state: present
+
+- name: enable loading necessary kernel modules at boot
+  tags: prepare_host
+  blockinfile:
+    path: "/etc/modules-load.d/99-kubernetes.conf"
+    create: true
+    block: |
+          br_netfilter
+          overlay
+
+- name: load necessary kernel modules
+  tags: prepare_host
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop: 
+    - br_netfilter
+    - overlay
+
+- name: set necessary kernel modules options
+  tags: prepare_host
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: 1
+    state: present
+    reload: true
+  loop:
+    - { name: 'net.bridge.bridge-nf-call-iptables' }
+    - { name: 'net.ipv4.ip_forward' }
+
+- name: set containerd config
+  tags: prepare_host
+  ansible.builtin.lineinfile:
+    path: /etc/containerd/config.toml
+    regexp: 'disabled_plugins'
+    line: '#disabled_plugins = ["cri"]'
+
+- name: restart containerd service
+  tags: prepare_host
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: restarted
+  loop: [ containerd ]
+
+- name: disable swap
+  tags: prepare_host
+  shell:
+    cmd: swapoff -a
+
+- name: disable swap at boot
+  tags: prepare_host
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+
+- name: disable ufw
+  tags: prepare_host
+  systemd:
+    name: ufw
+    enabled: false
+    state: stopped

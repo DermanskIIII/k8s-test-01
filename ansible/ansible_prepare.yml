@@ -1,0 +1,27 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: add user
+      ansible.builtin.user:
+        name: ansible
+        state: present
+    - name: setup sudo
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/ansible
+        create: yes
+        state: present
+        line: 'ansible ALL=(ALL:ALL) NOPASSWD:ALL'
+    - name: create .ssh dir
+      ansible.builtin.file:
+        path: /home/ansible/.ssh
+        state: directory
+        owner: ansible
+        group: ansible
+        mode: 0700
+    - name: add pub-key
+      ansible.builtin.lineinfile:
+        path: /home/ansible/.ssh/authorized_keys
+        create: yes
+        state: present
+        line: "ssh-rsa ..."

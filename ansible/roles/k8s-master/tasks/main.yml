@@ -1,0 +1,82 @@
+---
+- name: init cluster
+  tags: init, init_and_join
+  shell:
+    cmd: "kubeadm init --pod-network-cidr=10.244.0.0/16 > /root/kube_cluster_init.log"
+
+      #- name: get kube config file to local machine (unsecure)
+      #  tags: init, init_and_join
+      #  fetch:
+      #    src: /etc/kubernetes/admin.conf
+      #    dest: /tmp/
+
+- name: add user kube
+  tags: setup_kube_user
+  ansible.builtin.user:
+    name: kube
+    state: present
+    shell: /usr/bin/bash
+
+- name: create dir .kube at kube user dir
+  tags: setup_kube_user
+  ansible.builtin.file:
+    path: /home/kube/.kube
+    state: directory
+    owner: kube
+    group: kube
+    mode: 0700
+
+- name: copy kube admin.conf to kube user .kube dir
+  tags: setup_kube_user
+  ansible.builtin.copy:
+    remote_src: true
+    src: /etc/kubernetes/admin.conf
+    dest: /home/kube/.kube/config
+    owner: kube
+    group: kube
+    mode: 0700
+
+- name: add env var KUBECONFIG to kube user .profile file
+  tags: setup_kube_user
+  ansible.builtin.lineinfile:
+    path: /home/kube/.profile
+    line: KUBECONFIG=$HOME/.kube/config
+    insertafter: EOF
+    state: present
+
+- name: setup sudo
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/kube
+    create: yes
+    state: present
+    line: 'kube ALL=(ALL:ALL) NOPASSWD:ALL'
+
+- name: install helm
+  tags: helm
+  become_user: kube
+  shell:
+    cmd: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+- name: add calico helm-repo
+  tags: network_setup
+  become_user: kube
+  shell:
+    cmd: helm repo add projectcalico https://projectcalico.docs.tigera.io/charts/
+
+- name: install calico networking with helm
+  tags: network_setup
+  become_user: kube
+  shell:
+    cmd: helm install calico projectcalico/tigera-operator --version v3.26.3 --namespace tigera-operator --create-namespace
+
+- name: install nginx-ingress controller with helm
+  tags: network_setup
+  become_user: kube
+  shell:
+    cmd: "helm install nginx-ingress-controller oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2 --set-json 'controller.service.externalIPs=[\"{{ ansible_host }}\"]'"
+
+- name: get join command
+  tags: init_and_join, join_workers
+  shell:
+    cmd: "kubeadm token create --print-join-command"
+  register: join_command

@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns-db
+  labels:
+    app: db
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ns-db
+  name: dl-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      hostname: dbhost
+      containers:
+      - name: cnt-db
+        image: postgres
+        resources:
+          requests:
+            memory: "150Mi"
+            cpu: "30m"
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        env:
+        - name: POSTGRES_HOST_AUTH_METHOD
+          value: trust
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: ns-db
+  name: svc-db
+spec:
+  selector:
+    app: db
+  ports:
+  - port: 5432
+    targetPort: 5432

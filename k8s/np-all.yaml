@@ -1,0 +1,115 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-web
+  namespace: ns-web
+spec:
+  podSelector: 
+    matchLabels:
+      app: web
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ns-web
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          app: web
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          app: app
+    - podSelector:
+        matchLabels:
+          app: app
+    ports:
+      - protocol: TCP
+        port: 9000
+  - to:
+    ports:
+    - protocol: UDP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-app
+  namespace: ns-app
+spec:
+  podSelector: 
+    matchLabels:
+      app: app
+  policyTypes:
+  # - Ingress
+  # - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          app: web
+    - podSelector:
+        matchLabels:
+          app: web
+    ports:
+    - protocol: TCP
+      port: 9000
+
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          app: db
+    - podSelector:
+        matchLabels:
+          app: db
+    ports:
+      - protocol: TCP
+        port: 5432
+  - to:
+    ports:
+    - protocol: UDP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-db
+  namespace: ns-db
+spec:
+  podSelector: 
+    matchLabels:
+      app: db
+  policyTypes:
+  # - Ingress
+  # - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          app: app
+    - podSelector:
+        matchLabels:
+          app: app
+    ports:
+    - protocol: TCP
+      port: 5432
+  egress:
+  - to:
+    ports:
+    - protocol: UDP
+      port: 53

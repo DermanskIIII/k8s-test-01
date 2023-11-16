@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns-app
+  labels:
+    app: app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ns-app
+  name: dl-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      hostname: apphost
+      containers:
+      - name: cnt-app
+        image: php:8.2-fpm
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "30m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 9000
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: ns-app
+  name: svc-app
+spec:
+  selector:
+    app: app
+  ports:
+  - port: 9000
+    targetPort: 9000

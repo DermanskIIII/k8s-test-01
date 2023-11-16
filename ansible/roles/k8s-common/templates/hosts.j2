@@ -1,0 +1,6 @@
+127.0.0.1 localhost
+{% for host in groups['k8s'] %}
+{% if hostvars[host]['ansible_host'] %}
+{{ hostvars[host]['ansible_host'] }} {{ host }}
+{% endif %}
+{% endfor %}
