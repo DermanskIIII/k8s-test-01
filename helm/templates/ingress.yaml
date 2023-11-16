@@ -1,0 +1,32 @@
+{{- $fullName := include "test-01.fullname" . -}}
+{{- with .Values.ingress }}
+{{- if .enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: {{ .namespace }}-{{ $fullName }}
+  name: {{ .name }}
+spec:
+  ingressClassName: {{ .className }}
+  rules:
+  {{- range .hosts }}
+    - host: {{ .host  }}
+      http:
+        paths:
+    {{- range .paths }}
+          - pathType: Prefix
+            path: {{ .path | quote }}
+            backend:
+              service:
+                name: {{ .targetService }}
+                port:
+                  number: {{ .port }}
+    {{- end }}
+  {{- end }}
+status:
+  loadBalancer:
+    ingress:
+      - ip: {{ .externalIp }}
+{{- end }}
+{{- end }}

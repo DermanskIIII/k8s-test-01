@@ -16,7 +16,7 @@ spec:
             name: svc-web
             port:
               number: 80
-                #status:
-                #  loadBalancer:
-                #    ingress:
-                #      - ip: 192.168.122.11
+status:
+  loadBalancer:
+    ingress:
+      - ip: 192.168.122.139

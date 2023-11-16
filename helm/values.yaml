@@ -1,0 +1,44 @@
+# Default values for test-01.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+components:
+  - component: web
+    image: nginx
+    replicaCount: 1 
+    resources: {requests: {cpu: "30m", memory: "50Mi"}, limits: {cpu: "100m", memory: "128Mi"}}
+    ports:
+      - port: '80'
+        targetPort: '80'
+        proto: TCP
+      - port: '443'
+        targetPort: '443'
+        proto: TCP
+  - component: app
+    image: php:8.2-fpm
+    replicaCount: 1 
+    resources: {requests: {cpu: "30m", memory: "50Mi"}, limits: {cpu: "100m", memory: "128Mi"}}
+    ports:
+      - port: '9000'
+        proto: TCP
+        targetPort: '9000'
+  - component: db
+    image: postgres
+    replicaCount: 1 
+    resources: {requests: {cpu: "30m", memory: "150Mi"}, limits: {cpu: "100m", memory: "256Mi"}}
+    ports:
+      - port: '5432'
+        targetPort: '5432'
+        proto: TCP
+
+ingress:
+  enabled: true
+  namespace: ns-web
+  name: ing-web
+  className: "nginx"
+  externalIp: "192.168.122.139"
+  hosts:
+    - host: test.local
+      paths:
+        - path: /
+          targetService: "svc-web"
+          port: 80

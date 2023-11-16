@@ -1,0 +1,29 @@
+{{- $fullName := include "test-01.fullname" . -}}
+{{- range .Values.components }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ns-{{ .component }}-{{ $fullName }}
+  name: dl-{{ .component }}
+spec:
+  replicas: {{ .replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .component }}
+  template:
+    metadata:
+      labels:
+        app: {{ .component }}
+    spec:
+      containers:
+        - name: cnt-{{ .component }}
+          image: {{ .image }}
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+          ports:
+    {{- range .ports }}
+          - containerPort: {{ .targetPort }}
+            protocol: {{ .proto }}
+    {{- end }}
+{{- end }}

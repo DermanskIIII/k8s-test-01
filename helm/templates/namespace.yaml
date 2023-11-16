@@ -1,0 +1,10 @@
+{{- $fullName := include "test-01.fullname" . -}}
+{{- range .Values.components }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns-{{ .component }}-{{ $fullName }}
+  labels:
+    app: {{ .component }}
+{{- end }}
