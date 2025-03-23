@@ -24,4 +24,4 @@
         path: /home/ansible/.ssh/authorized_keys
         create: yes
         state: present
-        line: "ssh-rsa ..."
+        line: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM7EhdXFjisBQhm+g/JSAGVNHY0o/NzdqoRM2ZamyrJR ivand@msata"

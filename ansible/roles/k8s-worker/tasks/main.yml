@@ -1,5 +1,5 @@
 ---
 - name: join cluster
   tags: init_and_join, join_workers
-  shell: 
-    cmd: "{{ hostvars['kuber-1'].join_command.stdout_lines[0] }} > /root/kube_worker_join.log"
+  ansible.builtin.shell: 
+    cmd: "{{ hostvars['kuber-1'].join_command.stdout_lines[0] }} > /home/ansible/kube_worker_join.log"
