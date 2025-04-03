@@ -1,105 +1,105 @@
 ---
-# - name: setup hosts file
-#   tags: prepare_host
-#   ansible.builtin.template: 
-#     src: hosts.j2
-#     dest: /etc/hosts
+- name: setup hosts file
+  tags: prepare_host
+  ansible.builtin.template: 
+    src: hosts.j2
+    dest: /etc/hosts
 
-# - name: install necessary system packages
-#   tags: prepare_host
-#   ansible.builtin.apt:
-#     update_cache: true
-#     name: [ gpg, gnupg, acl, apt-transport-https, ca-certificates, curl ]
-#     state: present
+- name: install necessary system packages
+  tags: prepare_host
+  ansible.builtin.apt:
+    update_cache: true
+    name: [ gpg, gnupg, acl, apt-transport-https, ca-certificates, curl ]
+    state: present
 
-# - name: Установка containerd
-#   block:
-#     - name: Загрузка containerd
-#       ansible.builtin.get_url:
-#         url: "https://github.com/containerd/containerd/releases/download/v2.0.4/containerd-2.0.4-linux-amd64.tar.gz"
-#         dest: "/tmp/containerd-2.0.4-linux-amd64.tar.gz"
-#         checksum: "sha256:e1c64c5fd60ecd555e750744eaef150b6f78d7f750da5c08c52825aa6b791737" 
+- name: Установка containerd
+  block:
+    - name: Загрузка containerd
+      ansible.builtin.get_url:
+        url: "https://github.com/containerd/containerd/releases/download/v2.0.4/containerd-2.0.4-linux-amd64.tar.gz"
+        dest: "/tmp/containerd-2.0.4-linux-amd64.tar.gz"
+        checksum: "sha256:e1c64c5fd60ecd555e750744eaef150b6f78d7f750da5c08c52825aa6b791737" 
 
-#     - name: Распаковка containerd
-#       ansible.builtin.unarchive:
-#         src: "/tmp/containerd-2.0.4-linux-amd64.tar.gz"
-#         dest: "/usr/local"
-#         remote_src: yes
-#         owner: root
-#         group: root
+    - name: Распаковка containerd
+      ansible.builtin.unarchive:
+        src: "/tmp/containerd-2.0.4-linux-amd64.tar.gz"
+        dest: "/usr/local"
+        remote_src: yes
+        owner: root
+        group: root
 
-#     - name: Удаление архива containerd
-#       ansible.builtin.file:
-#         path: "/tmp/containerd-2.0.4-linux-amd64.tar.gz"
-#         state: absent
+    - name: Удаление архива containerd
+      ansible.builtin.file:
+        path: "/tmp/containerd-2.0.4-linux-amd64.tar.gz"
+        state: absent
 
-#     - name: Создание директории конфигурации containerd
-#       ansible.builtin.file:
-#         path: "/etc/containerd"
-#         state: directory
-#         owner: root
-#         group: root
+    - name: Создание директории конфигурации containerd
+      ansible.builtin.file:
+        path: "/etc/containerd"
+        state: directory
+        owner: root
+        group: root
 
-#     - name: Создание конфигурации по умолчанию для containerd
-#       ansible.builtin.copy:
-#         dest: "/etc/containerd/config.toml"
-#         content: |
-#           containerd config default
-#         owner: root
-#         group: root
+    - name: Создание конфигурации по умолчанию для containerd
+      ansible.builtin.copy:
+        dest: "/etc/containerd/config.toml"
+        content: |
+          containerd config default
+        owner: root
+        group: root
 
-# - name: Установка runc
-#   block:
-#     - name: Скачиваем бинарник runc
-#       ansible.builtin.get_url:
-#         url: "https://github.com/opencontainers/runc/releases/download/v1.2.6/runc.amd64"
-#         dest: /tmp/runc.amd64
-#         checksum: "sha256:0774f49d1b1eebb5849e644db5e4dc6f2b06cee05f13b3d17d5d6ba62d6f2ebc" 
-#         owner: root
-#         group: root
-#         mode: 0755
+- name: Установка runc
+  block:
+    - name: Скачиваем бинарник runc
+      ansible.builtin.get_url:
+        url: "https://github.com/opencontainers/runc/releases/download/v1.2.6/runc.amd64"
+        dest: /tmp/runc.amd64
+        checksum: "sha256:0774f49d1b1eebb5849e644db5e4dc6f2b06cee05f13b3d17d5d6ba62d6f2ebc" 
+        owner: root
+        group: root
+        mode: 0755
 
-#     - name: Установливам бинарника runc
-#       ansible.builtin.copy:
-#         remote_src: true
-#         src: /tmp/runc.amd64
-#         dest: /usr/local/sbin/runc
-#         owner: root
-#         group: root
-#         mode: 0755
+    - name: Установливам бинарника runc
+      ansible.builtin.copy:
+        remote_src: true
+        src: /tmp/runc.amd64
+        dest: /usr/local/sbin/runc
+        owner: root
+        group: root
+        mode: 0755
 
-#     - name: cleanup /tmp/runc.amd64
-#       ansible.builtin.file:
-#         path: "/tmp/runc.amd64"
-#         state: absent
+    - name: cleanup /tmp/runc.amd64
+      ansible.builtin.file:
+        path: "/tmp/runc.amd64"
+        state: absent
 
-# - name: Установка сетевых плагинов
-#   block:
-#     - name: Загрузка сетевых плагинов
-#       ansible.builtin.get_url:
-#         url: "https://github.com/containernetworking/plugins/releases/download/v1.6.2/cni-plugins-linux-amd64-v1.6.2.tgz"
-#         dest: "/tmp/cni-plugins-linux-amd64-v1.6.2.tgz"
-#         checksum: "sha256:b8e811578fb66023f90d2e238d80cec3bdfca4b44049af74c374d4fae0f9c090"
+- name: Установка сетевых плагинов
+  block:
+    - name: Загрузка сетевых плагинов
+      ansible.builtin.get_url:
+        url: "https://github.com/containernetworking/plugins/releases/download/v1.6.2/cni-plugins-linux-amd64-v1.6.2.tgz"
+        dest: "/tmp/cni-plugins-linux-amd64-v1.6.2.tgz"
+        checksum: "sha256:b8e811578fb66023f90d2e238d80cec3bdfca4b44049af74c374d4fae0f9c090"
 
-#     - name: Создание директории для сетевых плагинов
-#       ansible.builtin.file:
-#         path: "/opt/cni/bin"
-#         state: directory
-#         owner: root
-#         group: root
+    - name: Создание директории для сетевых плагинов
+      ansible.builtin.file:
+        path: "/opt/cni/bin"
+        state: directory
+        owner: root
+        group: root
 
-#     - name: Распаковка сетевых плагинов
-#       ansible.builtin.unarchive:
-#         src: "/tmp/cni-plugins-linux-amd64-v1.6.2.tgz"
-#         dest: "/opt/cni/bin"
-#         remote_src: yes
-#         owner: root
-#         group: root
+    - name: Распаковка сетевых плагинов
+      ansible.builtin.unarchive:
+        src: "/tmp/cni-plugins-linux-amd64-v1.6.2.tgz"
+        dest: "/opt/cni/bin"
+        remote_src: yes
+        owner: root
+        group: root
 
-#     - name: Удаление архива сетевых плагинов
-#       ansible.builtin.file:
-#         path: "/tmp/cni-plugins-linux-amd64-v1.6.2.tgz"
-#         state: absent
+    - name: Удаление архива сетевых плагинов
+      ansible.builtin.file:
+        path: "/tmp/cni-plugins-linux-amd64-v1.6.2.tgz"
+        state: absent
 
 - name: Создание и запуск сервиса containerd
   block:
