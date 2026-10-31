@@ -29,7 +29,7 @@ spec:
     - namespaceSelector:
         matchLabels:
           app: {{ $port.allowFrom }}
-    - podSelector:
+      podSelector:
         matchLabels:
           app: {{ $port.allowFrom }}
     ports:
@@ -46,7 +46,7 @@ spec:
     - namespaceSelector:
         matchLabels:
           app: {{ $component_from.component }}
-    - podSelector:
+      podSelector:
         matchLabels:
           app: {{ $component_from.component }}
     ports:

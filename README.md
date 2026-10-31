@@ -28,4 +28,4 @@
 
 Для развертывания "приложения" из helm-чарта:
 
-    hekm install ./helm
+    helm install ./helm

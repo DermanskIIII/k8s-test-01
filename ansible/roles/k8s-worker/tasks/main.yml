@@ -1,5 +1,12 @@
 ---
+- name: check whether node is initialized
+  tags: init, init_and_join
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: node_initialized
+
 - name: join cluster
   tags: init_and_join, join_workers
   ansible.builtin.shell: 
     cmd: "{{ hostvars['kuber-1'].join_command.stdout_lines[0] }} > /home/ansible/kube_worker_join.log"
+  when: not node_initialized.stat.exists

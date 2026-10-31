@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: np-web
-  namespace: ns-web-chart-1700129551-test-01
+  namespace: ns-web
 spec:
   podSelector: 
     matchLabels:
@@ -25,7 +25,7 @@ spec:
     - namespaceSelector:
         matchLabels:
           app: app
-    - podSelector:
+      podSelector:
         matchLabels:
           app: app
     ports:
@@ -40,7 +40,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: np-app
-  namespace: ns-app-chart-1700129551-test-01
+  namespace: ns-app
 spec:
   podSelector: 
     matchLabels:
@@ -53,7 +53,7 @@ spec:
     - namespaceSelector:
         matchLabels:
           app: web
-    - podSelector:
+      podSelector:
         matchLabels:
           app: web
     ports:
@@ -65,7 +65,7 @@ spec:
     - namespaceSelector:
         matchLabels:
           app: db
-    - podSelector:
+      podSelector:
         matchLabels:
           app: db
     ports:
@@ -80,7 +80,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: np-db
-  namespace: ns-db-chart-1700129551-test-01
+  namespace: ns-db
 spec:
   podSelector: 
     matchLabels:
@@ -93,7 +93,7 @@ spec:
     - namespaceSelector:
         matchLabels:
           app: app
-    - podSelector:
+      podSelector:
         matchLabels:
           app: app
     ports:

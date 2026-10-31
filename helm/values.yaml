@@ -42,7 +42,7 @@ ingress:
   namespace: ns-web
   name: ing-web
   className: "nginx"
-  externalIp: "192.168.122.139"
+  externalIp: "192.168.122.46"
   hosts:
     - host: test.local
       paths:

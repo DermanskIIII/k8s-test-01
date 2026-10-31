@@ -1,9 +1,16 @@
 ---
+- name: set system hostname
+  tags: prepare_host
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+
 - name: setup hosts file
   tags: prepare_host
-  ansible.builtin.template: 
-    src: hosts.j2
-    dest: /etc/hosts
+  ansible.builtin.blockinfile: 
+    path: /etc/hosts
+    insertafter: EOF
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK FOR KUBERNETES NODES -->"
+    block: "{{ lookup('ansible.builtin.template', 'templates/hosts.j2') }}"
 
 - name: install necessary system packages
   tags: prepare_host
@@ -13,6 +20,7 @@
     state: present
 
 - name: Установка containerd
+  tags: prepare_host
   block:
     - name: Загрузка containerd
       ansible.builtin.get_url:
@@ -41,14 +49,22 @@
         group: root
 
     - name: Создание конфигурации по умолчанию для containerd
+      ansible.builtin.command:
+        cmd: containerd config default
+      register: containerd_config
+      changed_when: false
+
+    - name: Запись конфигурации по умолчанию для containerd
       ansible.builtin.copy:
-        dest: "/etc/containerd/config.toml"
-        content: |
-          containerd config default
+        content: "{{ containerd_config.stdout }}"
+        dest: /etc/containerd/config.toml
         owner: root
         group: root
+        mode: '0644'
+      notify: Restart containerd
 
 - name: Установка runc
+  tags: prepare_host
   block:
     - name: Скачиваем бинарник runc
       ansible.builtin.get_url:
@@ -74,6 +90,7 @@
         state: absent
 
 - name: Установка сетевых плагинов
+  tags: prepare_host
   block:
     - name: Загрузка сетевых плагинов
       ansible.builtin.get_url:
@@ -102,6 +119,7 @@
         state: absent
 
 - name: Создание и запуск сервиса containerd
+  tags: prepare_host
   block:
     - name: Создание файла systemd service
       ansible.builtin.copy:
@@ -121,6 +139,7 @@
         state: started
 
 - name: Настройка конфигурации crictl
+  tags: prepare_host
   block:
   - name: Создание конфигурации crictl
     ansible.builtin.copy:
@@ -137,7 +156,7 @@
     state: present
     keyring: "/etc/apt/trusted.gpg.d/{{ item.file }}"
   loop:
-    - { url: "https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key", file: "kubernetes.gpg" }
+    - { url: "https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key", file: "kubernetes.gpg" }
 
 - name: add Docker and K8s repos
   tags: prepare_host
@@ -147,7 +166,7 @@
     state: "{{ item.state }}"
     update_cache: "{{ item.update_cache }}"
   loop:
-    - { repo: "deb [signed-by=/etc/apt/trusted.gpg.d/kubernetes.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /", filename: kubernetes, update_cache: false, state: present}
+    - { repo: "deb [signed-by=/etc/apt/trusted.gpg.d/kubernetes.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /", filename: kubernetes, update_cache: false, state: present}
 
 - name: install common k8s packages (kubelet, kubeadm, kubectl)
   tags: prepare_host

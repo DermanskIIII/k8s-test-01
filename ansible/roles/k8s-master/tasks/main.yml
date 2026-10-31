@@ -1,14 +1,21 @@
 ---
+- name: check whether Kubernetes is initialized
+  tags: init, init_and_join
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_initialized
+
 - name: init cluster
   tags: init, init_and_join
   ansible.builtin.shell:
-    cmd: "kubeadm init --pod-network-cidr=10.244.0.0/16 > /home/ansible/kube_cluster_init.log"
+    cmd: "kubeadm init --pod-network-cidr=192.168.0.0/16 > /home/ansible/kube_cluster_init.log"
+  when: not kubeadm_initialized.stat.exists
 
-      #- name: get kube config file to local machine (unsecure)
-      #  tags: init, init_and_join
-      #  fetch:
-      #    src: /etc/kubernetes/admin.conf
-      #    dest: /tmp/
+- name: get kube config file to local machine (unsecure)
+  tags: init, init_and_join
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: /tmp/
 
 - name: add user kube
   tags: setup_kube_user
@@ -45,35 +52,43 @@
     state: present
 
 - name: setup sudo
+  tags: setup_kube_user
   ansible.builtin.lineinfile:
     path: /etc/sudoers.d/kube
     create: yes
     state: present
     line: 'kube ALL=(ALL:ALL) NOPASSWD:ALL'
 
-# - name: add calico helm-repo
-#   tags: network_setup
-#   become_user: kube
-#   ansible.builtin.shell:
-#     cmd: helm repo add projectcalico https://projectcalico.docs.tigera.io/charts/
+- name: install helm
+  tags: helm
+  become_user: root
+  ansible.builtin.shell:
+    cmd: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  when: not kubeadm_initialized.stat.exists
 
-# - name: install calico networking with helm
-#   tags: network_setup
-#   become_user: kube
-#   ansible.builtin.shell:
-#     cmd: helm install calico projectcalico/tigera-operator --version v3.29.2 --namespace tigera-operator --create-namespace
-
-- name: flannel install
+- name: add calico helm-repo
   tags: network_setup
   become_user: kube
   ansible.builtin.shell:
-    cmd: "kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml"
+    cmd: helm repo add projectcalico https://docs.tigera.io/calico/charts
 
-- name: install helm
-  tags: helm
+- name: install calico networking with helm
+  tags: network_setup
   become_user: kube
   ansible.builtin.shell:
-    cmd: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    cmd: kubectl create namespace tigera-operator
+
+- name: install calico networking with helm
+  tags: network_setup
+  become_user: kube
+  ansible.builtin.shell:
+    cmd: "helm template calico-crds projectcalico/projectcalico.org.v3 --version v3.32.3 --api-versions admissionregistration.k8s.io/v1/MutatingAdmissionPolicy | kubectl apply --server-side -f -"
+
+- name: install calico networking with helm
+  tags: network_setup
+  become_user: kube
+  ansible.builtin.shell:
+    cmd: helm install calico projectcalico/tigera-operator --version v3.32.3 --namespace tigera-operator
 
 - name: install nginx-ingress controller with helm
   tags: network_setup
@@ -86,3 +101,4 @@
   ansible.builtin.shell:
     cmd: "kubeadm token create --print-join-command"
   register: join_command
+  when: not kubeadm_initialized.stat.exists
