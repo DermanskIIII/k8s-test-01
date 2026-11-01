@@ -72,13 +72,7 @@
   ansible.builtin.shell:
     cmd: helm repo add projectcalico https://docs.tigera.io/calico/charts
 
-- name: install calico networking with helm
-  tags: network_setup
-  become_user: kube
-  ansible.builtin.shell:
-    cmd: kubectl create namespace tigera-operator
-
-- name: install calico networking with helm
+- name: install calico networking with helm (CRDs)
   tags: network_setup
   become_user: kube
   ansible.builtin.shell:
@@ -88,13 +82,27 @@
   tags: network_setup
   become_user: kube
   ansible.builtin.shell:
-    cmd: helm install calico projectcalico/tigera-operator --version v3.32.3 --namespace tigera-operator
+    cmd: helm install calico projectcalico/tigera-operator --version v3.32.3 --namespace tigera-operator --create-namespace
 
 - name: install nginx-ingress controller with helm
   tags: network_setup
   become_user: kube
   ansible.builtin.shell:
     cmd: "helm install nginx-ingress-controller oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2 --set-json 'controller.service.externalIPs=[\"{{ ansible_host }}\"]'"
+
+- name: add calico metallb-repo
+  tags: network_setup
+  become_user: kube
+  ansible.builtin.shell:
+    cmd: helm repo add metallb https://metallb.github.io/metallb
+
+- name: install metallb with helm
+  tags: network_setup
+  become_user: kube
+  ansible.builtin.shell:
+    cmd: helm install metallb metallb/metallb --version 0.16.1 --namespace metallb-system --create-namespace --set speaker.frr.enabled=false --set frrk8s.enabled=false
+
+
 
 - name: get join command
   tags: init_and_join, join_workers
